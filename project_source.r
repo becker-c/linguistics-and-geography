@@ -21,13 +21,13 @@ language_files <- list.files(path = data_dir,
                              recursive = TRUE,
                              pattern = regex_for_files,
                              full.names = TRUE)
-"
-Every file is formatted similarly. We are only interested in name
-and language classification, so prepare R to extract these fields into a
-df. Ideally, Name will be a string, and classification will be a factor.
-It would be more user-friendly to rename 'classification' to 'family'
-"
-
+# "
+# Every file is formatted similarly. We are only interested in name
+# and language classification, so prepare R to extract these fields into a
+# df. Ideally, Name will be a string, and classification will be a factor.
+# It would be more user-friendly to rename 'classification' to 'family'
+# "
+# 
 # "
 # Start by getting one file to work. Data is delimited by COLON (:), get
 # it into a DF. It will look wonky, but we will clean it afterwards.
@@ -91,19 +91,30 @@ for (x in 1:length(df)){
   
 }
 
+compiled <- arrange(compiled, Name)
+compiled <- subset(compiled, compiled$Name != '\'Language name')
+
 "
 TODO: Add syllables to each language
 http://www.linguistics.ucla.edu/faciliti/sales/upsid.zip
+
+Koffi
+First, we want to intersect the langs that have syllable data.
+Do this before adding the syllable data!
+
+Rohit
+Then, we can add the syllable data for the remaining langs.
 
 "
 
 # # Source data is a txt file, so use read_delim with some added options.
 # # Note that data is tab-delimited.
-# lang <- read_delim(file = "UPSID_MATRIX.txt",
+# syllabs <- read_delim(file = "UPSID_MATRIX.txt",
 #                    delim = "\t",
 #                    na = c("", "NA"))
 
 "
+Austin
 TODO: Map family/classification to continent
 https://en.wikipedia.org/wiki/List_of_language_families#Language_families_(non-sign)
 "
