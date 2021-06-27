@@ -28,27 +28,30 @@ df. Ideally, Name will be a string, and classification will be a factor.
 It would be more user-friendly to rename 'classification' to 'family'
 "
 
-"
-Start by getting one file to work. Data is delimited by COLON (:), get
-it into a DF. It will look wonky, but we will clean it afterwards.
-"
-df <- read.delim("LG4101.INF", sep = ":",
-                 header = FALSE, strip.white = TRUE) %>%
-  t() %>%
-  as.data.frame()
-
-"
-Name columns now that data is transposed
-"
-df <- rename(df, Name = V1) %>%
-  rename(Family = V4) %>%
-  select(Name, Family)
-
-df <- subset(df, df$Name != "Language name")
-
-"
-Apply this to multiple files now.
-"
+# "
+# Start by getting one file to work. Data is delimited by COLON (:), get
+# it into a DF. It will look wonky, but we will clean it afterwards.
+# I used LG4101.INF as my test file, so you can add that into your root
+# directory if you wish.
+# "
+# 
+# df <- read.delim("LG4101.INF", sep = ":",
+#                  header = FALSE, strip.white = TRUE) %>%
+#   t() %>%
+#   as.data.frame()
+# 
+# "
+# Name columns now that data is transposed
+# "
+# df <- rename(df, Name = V1) %>%
+#   rename(Family = V4) %>%
+#   select(Name, Family)
+# 
+# df <- subset(df, df$Name != "Language name")
+# 
+# "
+# Apply this to multiple files now.
+# "
 
 prepareFiles <- function(file){
   aFile <- read.delim(file, sep = ":",
