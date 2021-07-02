@@ -34,3 +34,5 @@ We will combine the .STR files' classification/family of the language with the t
 
 # The Big Question
 Which languages and locations favor specific syllables?
+
+Languages evolve over time, but able humans' abilities to make sounds with our mouths has remained relatively static. The question above can help us answer how certain languages have evolved into what is spoken today and why some syllables are favored in other languages, regions, continents, etc.
