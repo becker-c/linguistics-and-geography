@@ -114,10 +114,10 @@ lang <- read_delim("UPSID_MATRIX.txt", col_names = FALSE, delim = "\t",
 comb <- bind_cols(compiled,lang)
 comb$X1 <- NULL
 
-install.packages("data.table")
-library(data.table)
 
 
+#install.packages("data.table")
+#library(data.table)
 
 
 # # Source data is a txt file, so use read_delim with some added options.
