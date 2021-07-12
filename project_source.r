@@ -109,39 +109,103 @@ Set df to NULL since we do not need it anymore and it is a large list
 df <- NULL
 
 "
+Add continents to each language. Start with continents that are in the Family
+Name.
+
+"
+compiled$Continent[grepl("Khoisan|Niger|Chadic|Saharan|Afro",
+                         compiled$Family)] <- "Africa"
+
+compiled$Continent[grepl("Sino|Dravidian|Burushaski|Chukchi|Siberian|Ket",
+                         compiled$Family)] <- "Asia"
+
+compiled$Continent[grepl("Caucasian|Ural|Indo-European|Basque",
+                         compiled$Family)] <- "Europe"
+
+compiled$Continent[grepl("(N\\.|Northern|North) Americ(an|a)|Caucasian|Eskimo|Na-Dene",
+                         compiled$Family)] <- "North America"
+
+compiled$Continent[grepl("Australian|Austro|Papuan|Polynesian",
+                         compiled$Family)] <- "Oceania"
+
+compiled$Continent[grepl("(S\\.|Southern|South) Americ(an|a)",
+                         compiled$Family)] <- "South America"
+
+
+"
 Add syllables to each language
 http://www.linguistics.ucla.edu/faciliti/sales/upsid.zip
 
-First, we want to intersect the langs that have syllable data.
-Do this before adding the syllable data!
+Read 'UPSID_MATRIX.txt' into object 'skylab'. Disable quoting since some
+syllables use double-quotes to denote symbols. Delimit with tabs.
 
-Read 'UPSID_MATRIX.txt' into object 'skylab' to create a new data frame.
+Some syllables are denoted as numbers; cast all cols as chars to minimize number
+of NAs. This is necessary for converting syllables to factor levels later, when
+syllables are just one long string.
 
 "
 
 skylab <- read_delim(file = "UPSID_MATRIX.txt",
                      delim = "\t",
                      quote = "",
+                     col_types = cols(.default = col_character()),
                      col_names = FALSE,
                      trim_ws = TRUE,
                      na = c("NA", " "))
 
-"
-Some syllables are denoted as numbers; cast all cols as chars so that NAs
-remain as NULL, rather than NA. This is necessary for converting syllables to
-factors later.
-
-"
-
-mutate(skylab, across(everything(), as.character))
-
-skylab <- mutate_all(skylab, as.character)
 
 "
 Rename first column to 'Name' to make data more readable
 
 "
 names(skylab)[1] <- c("Name")
+
+# "
+# Create factor that contains every syllable as a level. Do this by iterating thru
+# all syllable lists (i.e. for each language), but by column; we search by column
+# to take advantage of the syllables being sorted in their own way (e.g. notice
+# how syllables denoted by 'p' and 'b' always come first, second respectively).
+# Once we hit the syllable we need, we append to our list, then move on without
+# having to search the other lists.
+# "
+# 
+# all_syls <- c()
+# for (aCol in 2:ncol(skylab)){                                             # Iterate thru every column / syllable (start at column 2 to exclude name)
+#   done <- (aCol * 100)/ ncol(skylab)                                      # Create a "progress" message based on number of columns traversed since this loop can take a few seconds...
+#   if (done %% 5 == 0) message(
+#     sprintf("%s%% of the way through a long loop.", round(done)))
+#   for (aRow in 1:nrow(skylab)){                                           # Iterate thru each row / language
+#     if (skylab[[aRow, aCol]] == "" || is.na(skylab[[aRow,aCol]])) next    # If this language does not have this syllable, move on to the next language
+#     all_syls <- c(all_syls, skylab[[aRow, aCol]])                         # If the code is at this point, we know the current index has a syllable. Append that syllable to the vector
+#     names(skylab)[aCol] <- skylab[[aRow, aCol]]
+#     break                                                                 # Move on to the next syllable
+#   }
+# }
+
+"
+Rename each column to whatever syllable it contains. Then, change the column to
+type logical, denoting if that language contains that syllable or not.
+
+"
+
+for (aCol in 2:ncol(skylab)){
+  for (aRow in 1:nrow(skylab)){
+    if (skylab[[aRow, aCol]] == "" || is.na(skylab[[aRow,aCol]])) next
+    names(skylab)[aCol] <- paste("Syl:", skylab[[aRow, aCol]])
+    break
+  }
+  skylab[aCol] <- grepl("\\S", skylab[[aCol]])
+  
+  done <- (aCol * 100)/ ncol(skylab)
+  if (done %% 5 == 0) message(
+    sprintf("%s%% of the way through a long loop.", round(done)))
+}
+
+# skylab_alt <- skylab[,1]
+# 
+# for (aRow in 2:nrow(skylab)){
+#   skylab_alt[aRow,]$Syllables <- skylab[aRow,2:ncol(skylab)]
+# }
 
 "
 Need tidyr to use unite function in line code below, which is part of
@@ -158,14 +222,14 @@ on column 2.
 
 "
 max_cols <- ncol(skylab)
-skylab1 <- unite(skylab, Syllables, 2:max_cols, sep = ",")
+#skylab1 <- unite(skylab, Syllables, 2:max_cols, sep = ",")
 
 "
 Use inner_join to intersect 'skylab1' with 'compiled' and save new dataframe
 to 'lang_sylabls'
 
 "
-lang <- inner_join(compiled, skylab1,
+lang <- inner_join(compiled, skylab,
                    by = NULL, copy = FALSE,
                    suffix = c(".compiled",".skylab1"))
 
@@ -174,9 +238,8 @@ Drop 'Family' column to keep only 'Names' and 'Syllables' columns, then check
 the dataframe for any missing values
 
 "
-lang$Family <- NULL
-sum(is.na(lang))
 
+sum(is.na(lang))
 
 "
 Austin
