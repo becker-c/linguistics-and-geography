@@ -9,6 +9,9 @@
 library(readr)
 library(ggplot2)
 library(dplyr)
+library(ISOcodes)
+library(tidyverse)
+
 
 "
 Set working directory to wherever you have the data stored.
@@ -246,3 +249,34 @@ Austin
 TODO: Map family/classification to continent
 https://en.wikipedia.org/wiki/List_of_language_families#Language_families_(non-sign)
 "
+country <- ISO_3166_1  # loads the country code; need to install and load ISOcodes 
+
+lang_code <- ISO_639_2
+
+# text file downloaded from below link
+# https://www.ethnologue.com/codes/download-code-tables
+
+lang_index <- read_delim(file = "LanguageIndex.txt",
+                  delim = "\t")
+
+
+lang_index1 <- iconv(lang_index$Name, from = "ISO_8859-2", to = 'ASCII',
+                     sub = "Uniocode" ) 
+Name_update <- matrix(lang_index1)
+lang_index <- mutate(lang_index, Name_update) # adding the new column
+lang_index =as.data.frame(lang_index)
+compiledmap <- data.frame()
+compiled1 <- data.frame()
+
+for(i in 1:nrow(compiled))
+{
+    for(j in 1:nrow(lang_index)){
+    if(compiled[i,1] == as.character(lang_index[j,4]))
+    {
+        compiledmap <- rbind(compiledmap, lang_index [j, ]) # save the mapped data frame
+        compiled1 <- rbind(compiled1, compiled [i, ]) # to find which languages were mapped
+    } 
+    }
+    
+}
+
