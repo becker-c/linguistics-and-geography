@@ -96,7 +96,7 @@ for (x in 1:length(df)){
   df[[x]] <- select(df[[x]], V1, V4) %>%
     rename(Name = V1) %>%
     rename(Family = V4)
-
+  
   df[[x]] <- subset(df[[x]], df[[x]]$Name != 'Language name')
   
   compiled <- rbind(compiled, df[[x]])
@@ -245,38 +245,43 @@ the dataframe for any missing values
 sum(is.na(lang))
 
 "
-Austin
-TODO: Map family/classification to continent
-https://en.wikipedia.org/wiki/List_of_language_families#Language_families_(non-sign)
+Map family/classification to continent using country and language ISO Codes
+https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
+https://en.wikipedia.org/wiki/ISO_639-2
+
 "
-country <- ISO_3166_1  # loads the country code; need to install and load ISOcodes 
+country <- ISO_3166_1  # Country code
+lang_code <- ISO_639_2 # Language code
 
-lang_code <- ISO_639_2
-
-# text file downloaded from below link
-# https://www.ethnologue.com/codes/download-code-tables
-
+url <- "https://www.ethnologue.com/codes/LanguageIndex.tab"
+download.file(url, "LanguageIndex.txt")
 lang_index <- read_delim(file = "LanguageIndex.txt",
-                  delim = "\t")
+                         delim = "\t")
 
+"
+LanugageIndex.txt contains characters from ISO_8859-2; this encoding
+contains letters that are not in the English alphabet. Convert these chars
+to ASCII to get English alphabet equivalents.
 
-lang_index1 <- iconv(lang_index$Name, from = "ISO_8859-2", to = 'ASCII',
-                     sub = "Uniocode" ) 
+"
+
+#lang_index$Name <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
+lang_index1 <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
 Name_update <- matrix(lang_index1)
 lang_index <- mutate(lang_index, Name_update) # adding the new column
-lang_index =as.data.frame(lang_index)
+lang_index = as.data.frame(lang_index)
 compiledmap <- data.frame()
 compiled1 <- data.frame()
 
-for(i in 1:nrow(compiled))
-{
-    for(j in 1:nrow(lang_index)){
-    if(compiled[i,1] == as.character(lang_index[j,4]))
+for(i in 1:nrow(compiled)) {
+  for(j in 1:nrow(lang_index)){
+    if(compiled[i,1] == as.character(toupper(lang_index[j,4])))
     {
-        compiledmap <- rbind(compiledmap, lang_index [j, ]) # save the mapped data frame
-        compiled1 <- rbind(compiled1, compiled [i, ]) # to find which languages were mapped
-    } 
+      compiledmap <- rbind(compiledmap, lang_index [j, ]) # save the mapped data frame
+      compiled1 <- rbind(compiled1, compiled [i, ]) # to find which languages were mapped
     }
-    
+  }
+  done <- i * 100 / nrow(compiled)
+  message(sprintf("%.3f%% of the way through a very long loop.", done))
 }
 
