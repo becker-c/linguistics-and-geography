@@ -382,8 +382,34 @@ summ4 <- summ4 %>%
   rename(region = `countrymap$Name`, value = value) %>%
   select(region, value)
 
-mutate(summ4, tolower(region))
+summ4$region <- tolower(summ4$region)
 
+
+"
+Using error of regions that could not be mapped, manually change the names of
+the countries in summ4 to make them compatible with country choropleth
+
+"
+
+summ4$region[summ4$region == "moldova, republic of"] <- "moldova"
+summ4$region[summ4$region == "north macedonia"] <- "macedonia"
+summ4$region[summ4$region == "united states"] <- "united states of america"
+summ4$region[summ4$region == "russian federation"] <- "russia"
+summ4$region[summ4$region == "syrian arab republic"] <- "syria"
+summ4$region[summ4$region == "timor-leste"] <- "east timor"
+summ4$region[summ4$region == "taiwan, province of china"] <- "taiwan"
+summ4$region[summ4$region == "tanzania, united republic of"] <- "united republic of tanzania"
+summ4$region[summ4$region == "venezuela, bolivarian republic of"] <- "venezuela"
+summ4$region[summ4$region == "viet nam"] <- "vietnam"
+summ4$region[summ4$region == "bolivia, plurinational state of"] <- "bolivia"
+summ4$region[summ4$region == "brunei darussalam"] <- "brunei"
+summ4$region[summ4$region == "congo"] <- "republic of congo"
+summ4$region[summ4$region == "congo, the democratic republic of the"] <- "democratic republic of the congo"
+summ4$region[summ4$region == "czechia"] <- "czech republic"
+summ4$region[summ4$region == "guinea-bissau"] <- "guinea bissau"
+summ4$region[summ4$region == "iran, islamic republic of"] <- "iran"
+summ4$region[summ4$region == "lao people's democratic republic"] <- "laos"
+summ4$region[summ4$region == "northern cyprus"] <- "cyprus"
 
 # Plot country map based on language by country grouped in summ4
 # saved graph in object g4
@@ -391,6 +417,3 @@ mutate(summ4, tolower(region))
 g4 <- country_choropleth(summ4, title = "Language by Country",
                          num_colors = 2, zoom = NULL)
 g4
-
-### Getting error on country mapping in country_choropleth function
-
