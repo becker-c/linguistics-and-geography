@@ -245,7 +245,74 @@ the dataframe for any missing values
 sum(is.na(lang))
 
 
-#######
+######
+
+
+library(ISOcodes)
+
+
+"
+Map family/classification to continent using country and language ISO Codes
+https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
+https://en.wikipedia.org/wiki/ISO_639-2
+
+"
+country <- ISO_3166_1  # Country code
+lang_code <- ISO_639_2 # Language code
+
+url <- "https://www.ethnologue.com/codes/LanguageIndex.tab"
+download.file(url, "LanguageIndex.txt")
+lang_index <- read_delim(file = "LanguageIndex.txt",
+                         delim = "\t")
+
+"
+LanugageIndex.txt contains characters from ISO_8859-2; this encoding
+contains letters that are not in the English alphabet. Convert these chars
+to ASCII to get English alphabet equivalents.
+
+"
+
+#lang_index$Name <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
+lang_index1 <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
+Name_update <- matrix(lang_index1)
+lang_index <- mutate(lang_index, Name_update) # adding the new column
+lang_index = as.data.frame(lang_index)
+compiledmap <- data.frame()
+compiled1 <- data.frame()
+
+for(i in 1:nrow(compiled)) {
+  for(j in 1:nrow(lang_index)){
+    if(compiled[i,1] == as.character(toupper(lang_index[j,4])))
+    {
+      compiledmap <- rbind(compiledmap, lang_index [j, ]) # save the mapped data frame
+      compiled1 <- rbind(compiled1, compiled [i, ]) # to find which languages were mapped
+    }
+  }
+  done <- i * 100 / nrow(compiled)
+  message(sprintf("%.3f%% of the way through a very long loop.", done))
+}
+
+
+countrymap <- data.frame()
+maps <- compiledmap
+maps$CountryID[is.na(maps$CountryID)] <- "NAM"  # NA value is actually for country Namibia
+country$Alpha_2[country$Alpha_2=="NA"] <- "NAM" # NA value is actually for country Namibia
+for (a in 1:nrow(maps)){
+  for (b in 1:nrow(country)){
+    if(maps[a,2] == toupper(country[b,1])){
+      countrymap <- rbind(countrymap, country[b,])  
+    }
+  }
+  
+}
+compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
+
+  
+compiled2 <- distinct(compiled1)  # keep unique values. 
+
+
+####
+
 
 # Load necessary libraries
 
@@ -317,66 +384,3 @@ g4
 
 
 
-######
-
-library(ISOcodes)
-
-
-"
-Map family/classification to continent using country and language ISO Codes
-https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
-https://en.wikipedia.org/wiki/ISO_639-2
-
-"
-country <- ISO_3166_1  # Country code
-lang_code <- ISO_639_2 # Language code
-
-url <- "https://www.ethnologue.com/codes/LanguageIndex.tab"
-download.file(url, "LanguageIndex.txt")
-lang_index <- read_delim(file = "LanguageIndex.txt",
-                         delim = "\t")
-
-"
-LanugageIndex.txt contains characters from ISO_8859-2; this encoding
-contains letters that are not in the English alphabet. Convert these chars
-to ASCII to get English alphabet equivalents.
-
-"
-
-#lang_index$Name <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
-lang_index1 <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
-Name_update <- matrix(lang_index1)
-lang_index <- mutate(lang_index, Name_update) # adding the new column
-lang_index = as.data.frame(lang_index)
-compiledmap <- data.frame()
-compiled1 <- data.frame()
-
-for(i in 1:nrow(compiled)) {
-  for(j in 1:nrow(lang_index)){
-    if(compiled[i,1] == as.character(toupper(lang_index[j,4])))
-    {
-      compiledmap <- rbind(compiledmap, lang_index [j, ]) # save the mapped data frame
-      compiled1 <- rbind(compiled1, compiled [i, ]) # to find which languages were mapped
-    }
-  }
-  done <- i * 100 / nrow(compiled)
-  message(sprintf("%.3f%% of the way through a very long loop.", done))
-}
-
-
-countrymap <- data.frame()
-maps <- compiledmap
-maps$CountryID[is.na(maps$CountryID)] <- "NAM"  # NA value is actually for country Namibia
-country$Alpha_2[country$Alpha_2=="NA"] <- "NAM" # NA value is actually for country Namibia
-for (a in 1:nrow(maps)){
-  for (b in 1:nrow(country)){
-    if(maps[a,2] == toupper(country[b,1])){
-      countrymap <- rbind(countrymap, country[b,])  
-    }
-  }
-  
-}
-compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
-
-  
-compiled2 <- distinct(compiled1)  # keep unique values. 
