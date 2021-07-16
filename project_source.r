@@ -311,7 +311,8 @@ compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
 compiled2 <- distinct(compiled1)  # keep unique values. 
 
 
-####
+
+#### Summary Tables and Plots
 
 
 # Load necessary libraries
@@ -364,10 +365,15 @@ ggsave(filename = "g3.png", plot = g3, width = 6, height = 4, dpi = 600)
 
 
 
-# Summary table by the country whole name
+# Rename Name with value before summarying in table
 
 compiled1 <- compiled1 %>%
   rename(value = Name)
+
+
+# Summary table by the country whole name, save new data frame in summ4
+# rename `country$Name` and "value" to region and value respectively
+# and change region to lower case
 
 compiled1 <- group_by(compiled1, countrymap$Name)
 summ4 <- summarize(compiled1, value = n())
@@ -378,9 +384,13 @@ summ4 <- summ4 %>%
 
 mutate(summ4, tolower(region))
 
+
+# Plot country map based on language by country grouped in summ4
+# saved graph in object g4
+
 g4 <- country_choropleth(summ4, title = "Language by Country",
                          num_colors = 2, zoom = NULL)
 g4
 
-
+### Getting error on country mapping in country_choropleth function
 
