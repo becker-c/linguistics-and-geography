@@ -229,7 +229,7 @@ max_cols <- ncol(skylab)
 
 "
 Use inner_join to intersect 'skylab1' with 'compiled' and save new dataframe
-to 'lang_sylabls'
+to 'lang'
 
 "
 lang <- inner_join(compiled, skylab,
@@ -243,6 +243,84 @@ the dataframe for any missing values
 "
 
 sum(is.na(lang))
+
+
+#######
+
+# Load necessary libraries
+
+library(choroplethrAdmin1)
+library(choroplethr)
+library(choroplethrMaps)
+
+
+# Make a copy of lang into lang1
+
+lang1 <- lang
+
+
+# Summary table by Name
+
+lang1 <- group_by(lang1, Name)
+summ <- summarize(lang1, value = n())
+
+
+# Summary table by Family
+
+lang1 <- group_by(lang1, Family)
+summ1 <- summarize(lang1, value = n())
+
+
+# Summary table by Continent
+
+lang1 <- group_by(lang1, Continent)
+summ2 <- summarize(lang1, value = n())
+
+
+# Summary table by CountryID
+
+compiledmap <- group_by(compiledmap, CountryID)
+summ3 <- summarize(compiledmap, value = n())
+
+
+# Bar plot of language name
+
+g5 <- qplot(Name, data = compiledmap, geom = "bar")
+g5
+
+
+# Bar plot by a single syllable `Syl: p`
+
+g3 <- qplot(`Syl: p`, data = lang1, geom = "bar", fill = Continent)
+g3
+ggsave(filename = "g3.png", plot = g3, width = 6, height = 4, dpi = 600)
+
+
+
+# Summary table by the country whole name
+
+compiled1 <- compiled1 %>%
+  rename(value = Name)
+
+compiled1 <- group_by(compiled1, countrymap$Name)
+summ4 <- summarize(compiled1, value = n())
+
+summ4 <- summ4 %>%
+  rename(region = `countrymap$Name`, value = value) %>%
+  select(region, value)
+
+mutate(summ4, tolower(region))
+
+g4 <- country_choropleth(summ4, title = "Language by Country",
+                         num_colors = 2, zoom = NULL)
+g4
+
+
+
+######
+
+library(ISOcodes)
+
 
 "
 Map family/classification to continent using country and language ISO Codes
@@ -285,3 +363,20 @@ for(i in 1:nrow(compiled)) {
   message(sprintf("%.3f%% of the way through a very long loop.", done))
 }
 
+
+countrymap <- data.frame()
+maps <- compiledmap
+maps$CountryID[is.na(maps$CountryID)] <- "NAM"  # NA value is actually for country Namibia
+country$Alpha_2[country$Alpha_2=="NA"] <- "NAM" # NA value is actually for country Namibia
+for (a in 1:nrow(maps)){
+  for (b in 1:nrow(country)){
+    if(maps[a,2] == toupper(country[b,1])){
+      countrymap <- rbind(countrymap, country[b,])  
+    }
+  }
+  
+}
+compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
+
+  
+compiled2 <- distinct(compiled1)  # keep unique values. 
