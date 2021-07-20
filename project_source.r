@@ -4,13 +4,18 @@
  
  http://www.linguistics.ucla.edu/faciliti/sales/upsid.zip
  http://web.phonetik.uni-frankfurt.de/upsid_matrix.txt.zip
- 
+library(shiny)
+
 "
+
 library(readr)
 library(ggplot2)
 library(dplyr)
 library(ISOcodes)
 library(tidyverse)
+library(countrycode)
+library(shiny)
+
 
 
 "
@@ -308,8 +313,26 @@ for (a in 1:nrow(maps)){
 compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
 
   
-compiled2 <- distinct(compiled1)  # keep unique values. 
+compiled1 <- mutate(compiled1, Continent = countrycode(countrymap$Name, 
+                                                       'country.name', 'continent'))
 
+compiled2 <- data.frame()
+for (c in 1: nrow(compiled1)){
+  for(d in 1:nrow(lang)){
+    if(compiled1[c,1] == lang[d,1]){
+      compiled2 <- rbind(compiled2, lang[d, ])
+    }
+  }
+  
+}
+compiled3 <- compiled2
+compiled3$Family <-  paste0(compiled1$Continent)
+names(compiled3)[2]<-paste("Continent")
+names(compiled3)[3]<-paste("Country")
+
+compiled3$Country <- paste0(compiled1$`countrymap$Name`)
+
+write_csv(compiled3, "test.csv")
 
 
 #### Summary Tables and Plots
@@ -324,42 +347,42 @@ library(choroplethrMaps)
 
 # Make a copy of lang into lang1
 
-lang1 <- lang
+lang1 <- compiled3
 
 
 # Summary table by Name
 
-lang1 <- group_by(lang1, Name)
-summ <- summarize(lang1, value = n())
+compiled3 <- group_by(compiled3, Name)
+summ <- summarize(compiled3, value = n())
 
 
 # Summary table by Family
 
-lang1 <- group_by(lang1, Family)
-summ1 <- summarize(lang1, value = n())
+compiled3 <- group_by(compiled3, Country)
+summ1 <- summarize(compiled3, value = n())
 
 
 # Summary table by Continent
 
-lang1 <- group_by(lang1, Continent)
-summ2 <- summarize(lang1, value = n())
+compiled3 <- group_by(compiled3, Continent)
+summ2 <- summarize(compiled3, value = n())
 
 
 # Summary table by CountryID
 
-compiledmap <- group_by(compiledmap, CountryID)
-summ3 <- summarize(compiledmap, value = n())
+compiled3 <- group_by(compiled3, Country)
+summ3 <- summarize(compiled3, value = n())
 
 
 # Bar plot of language name
 
-g5 <- qplot(Name, data = compiledmap, geom = "bar")
+g5 <- qplot(Name, data = compiled3, geom = "bar")
 g5
 
 
 # Bar plot by a single syllable `Syl: p`
 
-g3 <- qplot(`Syl: p`, data = lang1, geom = "bar", fill = Continent)
+g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", fill = Continent)
 g3
 ggsave(filename = "g3.png", plot = g3, width = 6, height = 4, dpi = 600)
 
@@ -375,11 +398,11 @@ compiled1 <- compiled1 %>%
 # rename `country$Name` and "value" to region and value respectively
 # and change region to lower case
 
-compiled1 <- group_by(compiled1, countrymap$Name)
-summ4 <- summarize(compiled1, value = n())
+compiled3 <- group_by(compiled3, Country)
+summ4 <- summarize(compiled3, value = n())
 
 summ4 <- summ4 %>%
-  rename(region = `countrymap$Name`, value = value) %>%
+  rename(region = Country, value = value) %>%
   select(region, value)
 
 summ4$region <- tolower(summ4$region)
@@ -391,25 +414,25 @@ the countries in summ4 to make them compatible with country choropleth
 
 "
 
-summ4$region[summ4$region == "moldova, republic of"] <- "moldova"
-summ4$region[summ4$region == "north macedonia"] <- "macedonia"
-summ4$region[summ4$region == "united states"] <- "united states of america"
-summ4$region[summ4$region == "russian federation"] <- "russia"
-summ4$region[summ4$region == "syrian arab republic"] <- "syria"
-summ4$region[summ4$region == "timor-leste"] <- "east timor"
-summ4$region[summ4$region == "taiwan, province of china"] <- "taiwan"
-summ4$region[summ4$region == "tanzania, united republic of"] <- "united republic of tanzania"
-summ4$region[summ4$region == "venezuela, bolivarian republic of"] <- "venezuela"
-summ4$region[summ4$region == "viet nam"] <- "vietnam"
-summ4$region[summ4$region == "bolivia, plurinational state of"] <- "bolivia"
-summ4$region[summ4$region == "brunei darussalam"] <- "brunei"
-summ4$region[summ4$region == "congo"] <- "republic of congo"
-summ4$region[summ4$region == "congo, the democratic republic of the"] <- "democratic republic of the congo"
-summ4$region[summ4$region == "czechia"] <- "czech republic"
-summ4$region[summ4$region == "guinea-bissau"] <- "guinea bissau"
-summ4$region[summ4$region == "iran, islamic republic of"] <- "iran"
-summ4$region[summ4$region == "lao people's democratic republic"] <- "laos"
-summ4$region[summ4$region == "northern cyprus"] <- "cyprus"
+summ4$Country[summ4$Country == "moldova, republic of"] <- "moldova"
+summ4$Country[summ4$Country == "north macedonia"] <- "macedonia"
+summ4$Country[summ4$Country == "united states"] <- "united states of america"
+summ4$Country[summ4$Country == "russian federation"] <- "russia"
+summ4$Country[summ4$Country == "syrian arab republic"] <- "syria"
+summ4$Country[summ4$Country == "timor-leste"] <- "east timor"
+summ4$Country[summ4$Country == "taiwan, province of china"] <- "taiwan"
+summ4$Country[summ4$Country == "tanzania, united republic of"] <- "united republic of tanzania"
+summ4$Country[summ4$Country == "venezuela, bolivarian republic of"] <- "venezuela"
+summ4$Country[summ4$Country == "viet nam"] <- "vietnam"
+summ4$Country[summ4$Country == "bolivia, plurinational state of"] <- "bolivia"
+summ4$Country[summ4$Country == "brunei darussalam"] <- "brunei"
+summ4$Country[summ4$Country == "congo"] <- "republic of congo"
+summ4$Country[summ4$Country == "congo, the democratic republic of the"] <- "democratic republic of the congo"
+summ4$Country[summ4$Country == "czechia"] <- "czech republic"
+summ4$Country[summ4$Country == "guinea-bissau"] <- "guinea bissau"
+summ4$Country[summ4$Country == "iran, islamic republic of"] <- "iran"
+summ4$Country[summ4$Country == "lao people's democratic republic"] <- "laos"
+summ4$Country[summ4$Country == "northern cyprus"] <- "cyprus"
 
 # Plot country map based on language by country grouped in summ4
 # saved graph in object g4
