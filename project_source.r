@@ -14,9 +14,8 @@ library(dplyr)
 library(ISOcodes)
 library(tidyverse)
 library(countrycode)
+library(ISOcodes)
 library(shiny)
-
-
 
 "
 Set working directory to wherever you have the data stored.
@@ -246,20 +245,15 @@ Drop 'Family' column to keep only 'Names' and 'Syllables' columns, then check
 the dataframe for any missing values
 
 "
-
 sum(is.na(lang))
 
-
 ######
-
-
-library(ISOcodes)
-
 
 "
 Map family/classification to continent using country and language ISO Codes
 https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
 https://en.wikipedia.org/wiki/ISO_639-2
+Future Enhancement
 
 "
 country <- ISO_3166_1  # Country code
@@ -276,14 +270,13 @@ contains letters that are not in the English alphabet. Convert these chars
 to ASCII to get English alphabet equivalents.
 
 "
-
-#lang_index$Name <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
 lang_index1 <- iconv(lang_index$Name, to = 'ASCII//TRANSLIT') 
 Name_update <- matrix(lang_index1)
 lang_index <- mutate(lang_index, Name_update) # adding the new column
 lang_index = as.data.frame(lang_index)
 compiledmap <- data.frame()
 compiled1 <- data.frame()
+rm(Name_update)
 
 for(i in 1:nrow(compiled)) {
   for(j in 1:nrow(lang_index)){
@@ -297,6 +290,8 @@ for(i in 1:nrow(compiled)) {
   message(sprintf("%.3f%% of the way through a very long loop.", done))
 }
 
+rm(lang_index)
+rm(lang_index1)
 
 countrymap <- data.frame()
 maps <- compiledmap
@@ -305,16 +300,13 @@ country$Alpha_2[country$Alpha_2=="NA"] <- "NAM" # NA value is actually for count
 for (a in 1:nrow(maps)){
   for (b in 1:nrow(country)){
     if(maps[a,2] == toupper(country[b,1])){
-      countrymap <- rbind(countrymap, country[b,])  
+      countrymap <- rbind(countrymap, country[b,])
     }
   }
   
 }
 compiled1 <- cbind(compiled1, countrymap$Alpha_2, countrymap$Name)
-
-  
-compiled1 <- mutate(compiled1, Continent = countrycode(countrymap$Name, 
-                                                       'country.name', 'continent'))
+compiled1 <- mutate(compiled1, Continent = countrycode(countrymap$Name, 'country.name', 'continent'))
 
 compiled2 <- data.frame()
 for (c in 1: nrow(compiled1)){
@@ -323,97 +315,69 @@ for (c in 1: nrow(compiled1)){
       compiled2 <- rbind(compiled2, lang[d, ])
     }
   }
-  
 }
+
 compiled3 <- compiled2
 compiled3$Family <-  paste0(compiled1$Continent)
-names(compiled3)[2]<-paste("Continent")
-names(compiled3)[3]<-paste("Country")
+names(compiled3)[2] <- paste("Continent")
+names(compiled3)[3] <- paste("Country")
 
 compiled3$Country <- paste0(compiled1$`countrymap$Name`)
 
-write_csv(compiled3, "test.csv")
+write_csv(compiled3, "test1.csv")
 
+rm(compiled1)
+rm(compiled2)
 
 #### Summary Tables and Plots
-
-
 # Load necessary libraries
-
 library(choroplethrAdmin1)
 library(choroplethr)
 library(choroplethrMaps)
 
-
-# Make a copy of lang into lang1
-
+# Make a copy of compiled3 into lang1
 lang1 <- compiled3
 
-
 # Summary table by Name
-
 compiled3 <- group_by(compiled3, Name)
 summ <- summarize(compiled3, value = n())
 
-
 # Summary table by Family
-
 compiled3 <- group_by(compiled3, Country)
 summ1 <- summarize(compiled3, value = n())
 
-
 # Summary table by Continent
-
 compiled3 <- group_by(compiled3, Continent)
 summ2 <- summarize(compiled3, value = n())
 
-
 # Summary table by CountryID
-
 compiled3 <- group_by(compiled3, Country)
 summ3 <- summarize(compiled3, value = n())
 
-
 # Bar plot of language name
-
 g5 <- qplot(Name, data = compiled3, geom = "bar")
 g5
 
-
 # Bar plot by a single syllable `Syl: p`
-
 g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", fill = Continent)
 g3
 ggsave(filename = "g3.png", plot = g3, width = 6, height = 4, dpi = 600)
 
-
-
 # Rename Name with value before summarying in table
-
 compiled1 <- compiled1 %>%
   rename(value = Name)
-
 
 # Summary table by the country whole name, save new data frame in summ4
 # rename `country$Name` and "value" to region and value respectively
 # and change region to lower case
-
 compiled3 <- group_by(compiled3, Country)
 summ4 <- summarize(compiled3, value = n())
-
-summ4 <- summ4 %>%
-  rename(region = Country, value = value) %>%
-  select(region, value)
-
-summ4$region <- tolower(summ4$region)
-
+summ4$Country <- tolower(summ4$Country)
 
 "
 Using error of regions that could not be mapped, manually change the names of
 the countries in summ4 to make them compatible with country choropleth
-
 "
-
 summ4$Country[summ4$Country == "moldova, republic of"] <- "moldova"
 summ4$Country[summ4$Country == "north macedonia"] <- "macedonia"
 summ4$Country[summ4$Country == "united states"] <- "united states of america"
@@ -434,9 +398,16 @@ summ4$Country[summ4$Country == "iran, islamic republic of"] <- "iran"
 summ4$Country[summ4$Country == "lao people's democratic republic"] <- "laos"
 summ4$Country[summ4$Country == "northern cyprus"] <- "cyprus"
 
+summ4 <- summ4 %>%
+  rename(region = Country, value = value) %>%
+  select(region, value)
+
 # Plot country map based on language by country grouped in summ4
 # saved graph in object g4
 
 g4 <- country_choropleth(summ4, title = "Language by Country",
                          num_colors = 2, zoom = NULL)
 g4
+
+write_csv(summ4, "test2.csv")
+
