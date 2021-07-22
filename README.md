@@ -8,3 +8,4 @@ Alternatively, download the source data here, extract them from their zip archiv
  http://web.phonetik.uni-frankfurt.de/upsid_matrix.txt.zip
  
  Then, source "project_source.r"
+ Test1.R and Test2.R are shiny apps for running interactive reports
