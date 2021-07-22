@@ -9,8 +9,9 @@ library(shiny)
 # language is spoken in how many countries
 server <- function(input, output, session){
     
-    test <- read_csv("test.csv", col_names = TRUE)    
+    test <- read_csv("compiled3.csv", col_names = TRUE)    
     data <- reactive({
+        browser()
         req(input$sel_Continent)
         df <- test %>% filter(Continent %in% input$sel_Continent) %>% 
             group_by(Name) %>% 

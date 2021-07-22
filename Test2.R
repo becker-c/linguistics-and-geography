@@ -8,15 +8,16 @@ library(shiny)
 
 server <- function(input, output, session){
     
-    test <- read_csv("test.csv", col_names = TRUE)    
-    #    m_country <-  c("Select All", as.character(sort(unique(test$Country))))
-    #    m_Name <-  c("Select All", as.character(sort(unique(test$Name))))
+    test <- read_csv("compiled4.csv", col_names = TRUE)
     data <- reactive({
         req(input$sel_Name)
-        df <- test %>% group_by(Name %in% input$sel_Name) %>% 
-            #filter(as.character(Name) %in% input$sel_Name) %>% 
-            summarize(Country)
-        #summarize(Number_of_Countries = n())
+        
+        df <- filter(test, Name == input$sel_Name)
+        df <- group_by(df, Name)
+        df <- select(df, Name, region, value)
+        return(df)
+        # df <- test %>% filter(compiled4, Name == sel_Name) %>%
+        #     select(region, value)
     })
     
     # update input dynamically
@@ -25,20 +26,16 @@ server <- function(input, output, session){
     })
     
     output$my_plot <- renderPlot({
-        m_Country <- c("Select All", tolower(sort(unique(test$Country))))
-        #        g <- ggplot(data(), aes( y = Number_of_Countries, x = Name))
-        #        g + geom_bar(stat = "identity") + 
-        #            theme(axis.text.x = element_text(angle = 90))
-        g <- country_choropleth(data(), title = "Language by Country",
-                                num_colors = 2, zoom = m_Country)    
+        g <- suppressWarnings(
+            country_choropleth(data(),title = "Countries by Language"))
+        g
     })
     
 }
 
 ui <- basicPage(
-    h4(" Interactive Bar Chart Showing How Many Languages per Continent"),
-    selectInput(inputId = "sel_Name", label = "Choose Name",
-                "Names"),
+    h4(" Interactive C-Map Showing Countries, by Language"),
+    selectInput(inputId = "sel_Name", label = "Choose Name", "Name"),
     plotOutput(outputId = "my_plot")
     
 )

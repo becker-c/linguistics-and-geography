@@ -111,9 +111,9 @@ compiled <- arrange(compiled, Name)
 compiled <- subset(compiled, compiled$Name != '\'Language name')
 
 "
-Set df to NULL since we do not need it anymore and it is a large list
+Remove df since we do not need it anymore and it is a large list
 "
-df <- NULL
+rm(df)
 
 "
 Add continents to each language. Start with continents that are in the Family
@@ -159,7 +159,6 @@ skylab <- read_delim(file = "UPSID_MATRIX.txt",
                      col_names = FALSE,
                      trim_ws = TRUE,
                      na = c("NA", " "))
-
 
 "
 Rename first column to 'Name' to make data more readable
@@ -257,12 +256,14 @@ Future Enhancement
 
 "
 country <- ISO_3166_1  # Country code
-lang_code <- ISO_639_2 # Language code
+#lang_code <- ISO_639_2 # Language code
 
 url <- "https://www.ethnologue.com/codes/LanguageIndex.tab"
 download.file(url, "LanguageIndex.txt")
 lang_index <- read_delim(file = "LanguageIndex.txt",
                          delim = "\t")
+
+rm(url)
 
 "
 LanugageIndex.txt contains characters from ISO_8859-2; this encoding
@@ -276,7 +277,6 @@ lang_index <- mutate(lang_index, Name_update) # adding the new column
 lang_index = as.data.frame(lang_index)
 compiledmap <- data.frame()
 compiled1 <- data.frame()
-rm(Name_update)
 
 for(i in 1:nrow(compiled)) {
   for(j in 1:nrow(lang_index)){
@@ -289,9 +289,6 @@ for(i in 1:nrow(compiled)) {
   done <- i * 100 / nrow(compiled)
   message(sprintf("%.3f%% of the way through a very long loop.", done))
 }
-
-rm(lang_index)
-rm(lang_index1)
 
 countrymap <- data.frame()
 maps <- compiledmap
@@ -324,10 +321,8 @@ names(compiled3)[3] <- paste("Country")
 
 compiled3$Country <- paste0(compiled1$`countrymap$Name`)
 
-write_csv(compiled3, "test1.csv")
-
-rm(compiled1)
-rm(compiled2)
+# Save compiled3 off for use in shiny
+write_csv(compiled3, "compiled3.csv")
 
 #### Summary Tables and Plots
 # Load necessary libraries
@@ -371,32 +366,33 @@ compiled1 <- compiled1 %>%
 # rename `country$Name` and "value" to region and value respectively
 # and change region to lower case
 compiled3 <- group_by(compiled3, Country)
-summ4 <- summarize(compiled3, value = n())
-summ4$Country <- tolower(summ4$Country)
+compiled3$Country <- tolower(compiled3$Country)
 
 "
 Using error of regions that could not be mapped, manually change the names of
 the countries in summ4 to make them compatible with country choropleth
 "
-summ4$Country[summ4$Country == "moldova, republic of"] <- "moldova"
-summ4$Country[summ4$Country == "north macedonia"] <- "macedonia"
-summ4$Country[summ4$Country == "united states"] <- "united states of america"
-summ4$Country[summ4$Country == "russian federation"] <- "russia"
-summ4$Country[summ4$Country == "syrian arab republic"] <- "syria"
-summ4$Country[summ4$Country == "timor-leste"] <- "east timor"
-summ4$Country[summ4$Country == "taiwan, province of china"] <- "taiwan"
-summ4$Country[summ4$Country == "tanzania, united republic of"] <- "united republic of tanzania"
-summ4$Country[summ4$Country == "venezuela, bolivarian republic of"] <- "venezuela"
-summ4$Country[summ4$Country == "viet nam"] <- "vietnam"
-summ4$Country[summ4$Country == "bolivia, plurinational state of"] <- "bolivia"
-summ4$Country[summ4$Country == "brunei darussalam"] <- "brunei"
-summ4$Country[summ4$Country == "congo"] <- "republic of congo"
-summ4$Country[summ4$Country == "congo, the democratic republic of the"] <- "democratic republic of the congo"
-summ4$Country[summ4$Country == "czechia"] <- "czech republic"
-summ4$Country[summ4$Country == "guinea-bissau"] <- "guinea bissau"
-summ4$Country[summ4$Country == "iran, islamic republic of"] <- "iran"
-summ4$Country[summ4$Country == "lao people's democratic republic"] <- "laos"
-summ4$Country[summ4$Country == "northern cyprus"] <- "cyprus"
+compiled3$Country[compiled3$Country == "moldova, republic of"] <- "moldova"
+compiled3$Country[compiled3$Country == "north macedonia"] <- "macedonia"
+compiled3$Country[compiled3$Country == "united states"] <- "united states of america"
+compiled3$Country[compiled3$Country == "russian federation"] <- "russia"
+compiled3$Country[compiled3$Country == "syrian arab republic"] <- "syria"
+compiled3$Country[compiled3$Country == "timor-leste"] <- "east timor"
+compiled3$Country[compiled3$Country == "taiwan, province of china"] <- "taiwan"
+compiled3$Country[compiled3$Country == "tanzania, united republic of"] <- "united republic of tanzania"
+compiled3$Country[compiled3$Country == "venezuela, bolivarian republic of"] <- "venezuela"
+compiled3$Country[compiled3$Country == "viet nam"] <- "vietnam"
+compiled3$Country[compiled3$Country == "bolivia, plurinational state of"] <- "bolivia"
+compiled3$Country[compiled3$Country == "brunei darussalam"] <- "brunei"
+compiled3$Country[compiled3$Country == "congo"] <- "republic of congo"
+compiled3$Country[compiled3$Country == "congo, the democratic republic of the"] <- "democratic republic of the congo"
+compiled3$Country[compiled3$Country == "czechia"] <- "czech republic"
+compiled3$Country[compiled3$Country == "guinea-bissau"] <- "guinea bissau"
+compiled3$Country[compiled3$Country == "iran, islamic republic of"] <- "iran"
+compiled3$Country[compiled3$Country == "lao people's democratic republic"] <- "laos"
+compiled3$Country[compiled3$Country == "northern cyprus"] <- "cyprus"
+
+summ4 <- summarize(compiled3, value = n())
 
 summ4 <- summ4 %>%
   rename(region = Country, value = value) %>%
@@ -409,5 +405,28 @@ g4 <- country_choropleth(summ4, title = "Language by Country",
                          num_colors = 2, zoom = NULL)
 g4
 
-write_csv(summ4, "test2.csv")
+"
+Create df for use in our interactive c-map. Base this off of compiled3.
+Intent is to visualize which languages are in which countries, so remove
+syllables.
+"
+compiled4 <- compiled3[, 1:3]
 
+"
+Since we want to display which regions have which languages, we can filter on
+a language and the regions it appears in will be dispalyed. Since a region
+either does or does not include a language, we can create a new column named 
+'value' that has a value of 1. All other countries will have a value of 0/NA.
+Then, we can dynamically select which language we want to view via shiny.
+(Filtering will take place in our shiny code, since that's what we want to be
+dynamic)
+"
+compiled4 <- rename(compiled4, region = Country)
+compiled4$value <- 1
+write_csv(compiled4, "compiled4.csv")
+
+"Cleanup, so our workspace is not as cluttered."
+rm(a, b, c, d, i, j, x, aCol, aRow, done, max_cols, compiled1, compiled2,
+   Name_update, compiledmap, maps, lang_index, lang_index1)
+
+print("Sourcing complete.")
