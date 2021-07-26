@@ -16,6 +16,13 @@ library(tidyverse)
 library(countrycode)
 library(ISOcodes)
 library(shiny)
+library(reshape2)
+library(scales)
+library(stringr)
+library(choroplethrAdmin1)
+library(choroplethr)
+library(choroplethrMaps)
+
 
 "
 Set working directory to wherever you have the data stored.
@@ -324,11 +331,7 @@ compiled3$Country <- paste0(compiled1$`countrymap$Name`)
 # Save compiled3 off for use in shiny
 write_csv(compiled3, "compiled3.csv")
 
-#### Summary Tables and Plots
-# Load necessary libraries
-library(choroplethrAdmin1)
-library(choroplethr)
-library(choroplethrMaps)
+# Summary Tables and Plots
 
 # Make a copy of compiled3 into lang1
 lang1 <- compiled3
@@ -349,14 +352,46 @@ summ2 <- summarize(compiled3, value = n())
 compiled3 <- group_by(compiled3, Country)
 summ3 <- summarize(compiled3, value = n())
 
-# Bar plot of language name
-g5 <- qplot(Name, data = compiled3, geom = "bar")
-g5
+"
+Create data frame to plot top 10 Countries by number of language
 
-# Bar plot by a single syllable `Syl: p`
+"
+
+# Copy summ3 to new object summ31
+summ31 <- summ3
+
+# Create new data frame "Top_10" of top 10 countries by number of language
+Top_10 <- top_n(summ31, 10)
+
+
+# Plot graph of top 10 countries by number of language
+g1 <- qplot(Country, value, data = Top_10, geom = "jitter", 
+             fill = I("blue"), color = I("blue"), alpha = I(0.7))
+g1 <- g1 + ggtitle("Top 10 by Number of Language")
+g1 <- g1 + xlab("Country")
+g1 <- g1 + ylab("Count")
+g1
+ggsave(filename = "By_Top_10_Country.png", plot = g1, 
+       width = 13, height = 6, dpi = 600)
+
+
+# Bar plot of count of language by continent
+g2 <- qplot(Continent, data = compiled3, geom = "bar", 
+            fill = I("lightblue"), 
+            color = I("blue"), alpha = I(2))
+g2 <- g2 + ggtitle("Language by Continent")
+g2 <- g2 + xlab("Continent")
+g2 <- g2 + ylab("Count")
+g2
+ggsave(filename = "By_Num_Lang_Continent.png", plot = g2, 
+       width = 6, height = 4, dpi = 600)
+
+
+# Bar plot of syllable `Syl: p` in continents
 g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", fill = Continent)
 g3
-ggsave(filename = "g3.png", plot = g3, width = 6, height = 4, dpi = 600)
+ggsave(filename = "By_Syllable_Continent.png", plot = g3, 
+       width = 6, height = 4, dpi = 600)
 
 # Rename Name with value before summarying in table
 compiled1 <- compiled1 %>%
@@ -392,18 +427,29 @@ compiled3$Country[compiled3$Country == "iran, islamic republic of"] <- "iran"
 compiled3$Country[compiled3$Country == "lao people's democratic republic"] <- "laos"
 compiled3$Country[compiled3$Country == "northern cyprus"] <- "cyprus"
 
+# create a summary table to plot 
+# a choropleth map of language by country
 summ4 <- summarize(compiled3, value = n())
-
 summ4 <- summ4 %>%
   rename(region = Country, value = value) %>%
   select(region, value)
 
 # Plot country map based on language by country grouped in summ4
 # saved graph in object g4
-
-g4 <- country_choropleth(summ4, title = "Language by Country",
-                         num_colors = 2, zoom = NULL)
+g4 <- country_choropleth(summ4, title = "Language/Country", 
+                         num_colors = 4, zoom = NULL)
 g4
+ggsave(filename = "By_Lang_Country.png", plot = g4, 
+       width = 6, height = 4, dpi = 600)
+
+
+# Stacked Bar plot of number of language by continent
+g5 <- ggplot(summ2, aes(fill=value, y=value, x=Continent)) + 
+          geom_bar(position="fill", stat="identity")
+g5
+ggsave(filename = "By_Lang_Continent.png", plot = g5, 
+       width = 6, height = 4, dpi = 600)
+
 
 "
 Create df for use in our interactive c-map. Base this off of compiled3.
