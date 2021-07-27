@@ -387,8 +387,8 @@ g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", facets = . ~ Continent,
             fill = Continent) +
   ggtitle("Bilabial Plosive (p) Occurance in Languages, by Continent")
 g3
-ggsave(filename = "By_Syllable_Continent.png", plot = g3, 
-       width = 6, height = 4, dpi = 600)
+ggsave(filename = "By_Syllable_BPlosive_Continent.png", plot = g3, 
+       width = 8, height = 4, dpi = 600)
 
 # Rename Name with value before summarying in table
 compiled1 <- compiled1 %>%
@@ -446,7 +446,7 @@ g5 <- qplot(`Syl: n|`, data = compiled3, geom = "bar", facets = . ~ Continent,
   ggtitle("Nasalized Voiced Dental Affricated Click ('n|') Occurance in Languages, by Continent")
 g5
 ggsave(filename = "By_Syllable_Click_Continent.png", plot = g5,
-       width = 6, height = 4, dpi = 600)
+       width = 8, height = 4, dpi = 600)
 
 "
 Create a df for use in our interactive c-map. Base this off of compiled3.
@@ -469,7 +469,7 @@ compiled4$value <- 1
 write_csv(compiled4, "compiled4.csv")
 
 "Cleanup, so our workspace is not as cluttered."
-rm(a, b, c, d, i, j, x, aCol, aRow, done, max_cols, compiled1, compiled2,
-   Name_update, compiledmap, maps, lang_index, lang_index1)
+# rm(a, b, c, d, i, j, x, aCol, aRow, done, max_cols, compiled1, compiled2,
+#    Name_update, compiledmap, maps, lang_index, lang_index1)
 
 print("Sourcing complete.")
