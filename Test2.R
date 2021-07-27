@@ -5,6 +5,7 @@ library(choroplethrAdmin1)
 library(choroplethr)
 library(choroplethrMaps)
 library(shiny)
+library(scales)
 
 server <- function(input, output, session){
     
@@ -27,8 +28,9 @@ server <- function(input, output, session){
     
     output$my_plot <- renderPlot({
         g <- suppressWarnings(
-            country_choropleth(data(),title = "Countries by Language"))
-        g
+            country_choropleth(data(),title = "Countries by Language") + 
+            scale_fill_discrete(na.value = "grey"))
+        g 
     })
     
 }

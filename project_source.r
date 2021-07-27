@@ -4,9 +4,9 @@
  
  http://www.linguistics.ucla.edu/faciliti/sales/upsid.zip
  http://web.phonetik.uni-frankfurt.de/upsid_matrix.txt.zip
-library(shiny)
 
 "
+rm(list = ls())
 
 library(readr)
 library(ggplot2)
@@ -253,8 +253,6 @@ the dataframe for any missing values
 "
 sum(is.na(lang))
 
-######
-
 "
 Map family/classification to continent using country and language ISO Codes
 https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
@@ -357,29 +355,26 @@ Create data frame to plot top 10 Countries by number of language
 
 "
 
-# Copy summ3 to new object summ31
-summ31 <- summ3
-
 # Create new data frame "Top_10" of top 10 countries by number of language
-Top_10 <- top_n(summ31, 10)
-
+Top_10 <- top_n(summ3, 10) %>%
+  arrange(-value)
 
 # Plot graph of top 10 countries by number of language
-g1 <- qplot(Country, value, data = Top_10, geom = "jitter", 
+
+g1 <- qplot(Country, value, data = Top_10, geom = "point", 
              fill = I("blue"), color = I("blue"), alpha = I(0.7))
-g1 <- g1 + ggtitle("Top 10 by Number of Language")
+g1 <- g1 + ggtitle("Top 10 Countries by Number of Languages")
 g1 <- g1 + xlab("Country")
 g1 <- g1 + ylab("Count")
 g1
 ggsave(filename = "By_Top_10_Country.png", plot = g1, 
        width = 13, height = 6, dpi = 600)
 
-
 # Bar plot of count of language by continent
 g2 <- qplot(Continent, data = compiled3, geom = "bar", 
             fill = I("lightblue"), 
             color = I("blue"), alpha = I(2))
-g2 <- g2 + ggtitle("Language by Continent")
+g2 <- g2 + ggtitle("Count of Languages by Continent")
 g2 <- g2 + xlab("Continent")
 g2 <- g2 + ylab("Count")
 g2
@@ -387,8 +382,10 @@ ggsave(filename = "By_Num_Lang_Continent.png", plot = g2,
        width = 6, height = 4, dpi = 600)
 
 
-# Bar plot of syllable `Syl: p` in continents
-g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", fill = Continent)
+# Bar plot of syllable `Syl: p` in continents: bilabial plosive
+g3 <- qplot(`Syl: p`, data = compiled3, geom = "bar", facets = . ~ Continent,
+            fill = Continent) +
+  ggtitle("Bilabial Plosive (p) Occurance in Languages, by Continent")
 g3
 ggsave(filename = "By_Syllable_Continent.png", plot = g3, 
        width = 6, height = 4, dpi = 600)
@@ -438,21 +435,21 @@ summ4 <- summ4 %>%
 # saved graph in object g4
 g4 <- country_choropleth(summ4, title = "Language/Country", 
                          num_colors = 4, zoom = NULL)
+g4 <- g4 + scale_fill_discrete(na.value = "grey")
 g4
 ggsave(filename = "By_Lang_Country.png", plot = g4, 
        width = 6, height = 4, dpi = 600)
 
-
-# Stacked Bar plot of number of language by continent
-g5 <- ggplot(summ2, aes(fill=value, y=value, x=Continent)) + 
-          geom_bar(position="fill", stat="identity")
+# Bar plot of syllable `Syl: n|` in continents
+g5 <- qplot(`Syl: n|`, data = compiled3, geom = "bar", facets = . ~ Continent,
+            fill = Continent) +
+  ggtitle("Nasalized Voiced Dental Affricated Click ('n|') Occurance in Languages, by Continent")
 g5
-ggsave(filename = "By_Lang_Continent.png", plot = g5, 
+ggsave(filename = "By_Syllable_Click_Continent.png", plot = g5,
        width = 6, height = 4, dpi = 600)
 
-
 "
-Create df for use in our interactive c-map. Base this off of compiled3.
+Create a df for use in our interactive c-map. Base this off of compiled3.
 Intent is to visualize which languages are in which countries, so remove
 syllables.
 "
