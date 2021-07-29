@@ -468,8 +468,39 @@ compiled4 <- rename(compiled4, region = Country)
 compiled4$value <- 1
 write_csv(compiled4, "compiled4.csv")
 
+df <- data.frame()
+df1 <- data.frame()
+
+for (j in 4:ncol(compiled3)){
+  df <- as.data.frame(compiled3[, c(1,2,3,j)])
+  df [df == TRUE] <- names(compiled3[ ,j])
+  df [df == FALSE] <- " "
+  df <- na.omit(df)
+  df1 <- bind_rows(df1, df)
+  
+  done <- j * 100 / ncol(compiled3)
+  message(sprintf("%.3f%% of the way through another long loop.", done))
+  
+}
+
+message(print("The next few lines take a minute or two..."))
+
+df2 <- df1
+df2 <- df2[-c(1,2,3)]
+df2[is.na(df2)] <- " "
+
+mycols <- c(1:795)
+df3 <- unite(df2,mycols, sep ="")
+df3 <- data.frame (lapply(df3, trimws)) 
+
+df4 <- df1[-c(4:798)] 
+compiled5 <- data.frame(cbind(df4,df3))
+colnames(compiled5)[4] <- "Syllable"
+write_csv(compiled5, "compiled5.csv")
+
 "Cleanup, so our workspace is not as cluttered."
 # rm(a, b, c, d, i, j, x, aCol, aRow, done, max_cols, compiled1, compiled2,
-#    Name_update, compiledmap, maps, lang_index, lang_index1)
+#    Name_update, compiledmap, maps, lang_index, lang_index1, df, df1, df2, df3
+#    df4, df5)
 
 print("Sourcing complete.")
